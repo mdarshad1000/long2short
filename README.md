@@ -1,4 +1,4 @@
-# long2short
+# long2short 📜
 
 **long2short** is a flexible Python library for long document text summarization that supports multiple Language Model (LLM) providers. It allows you to summarize long documents with fine-grained control over the level of detail. With an extensible architecture, it’s easy to integrate with various LLMs and customize its behavior.
 
