@@ -17,9 +17,10 @@ class LLMProvider(ABC):
 class OpenAIProvider(LLMProvider):
     """OpenAI API provider implementation."""
     
-    def __init__(self, api_key: str = None, model: str = "gpt-4-turbo"):
+    def __init__(self, api_key: str = None, model: str = "gpt-4-turbo", base_url: str = "https://api.openai.com/v1"):
         self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
         self.model = model
+        self.base_url = base_url
     
     def generate_completion(self, messages: List[Dict[str, str]], **kwargs) -> str:        
         response = self.client.chat.completions.create(

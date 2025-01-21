@@ -1,1 +1,4 @@
 .venv
+.pypirc
+long2short.egg-info
+dist
