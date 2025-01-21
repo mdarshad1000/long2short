@@ -18,7 +18,7 @@ class OpenAIProvider(LLMProvider):
     """OpenAI API provider implementation."""
     
     def __init__(self, api_key: str = None, model: str = "gpt-4-turbo", base_url: str = "https://api.openai.com/v1"):
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=base_url or os.getenv("OPENAI_API_BASE"))
         self.model = model
         self.base_url = base_url
     
