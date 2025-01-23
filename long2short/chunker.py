@@ -38,6 +38,8 @@ class TextChunker:
             header=header,
             add_ellipsis=add_ellipsis,
         )
+        if dropped > 0:
+            print(f"warning: {dropped} chunks were dropped due to overflow")
 
         # Add back delimiters
         combined_chunks = [f"{chunk}{delimiter}" for chunk in combined_chunks]
@@ -65,53 +67,33 @@ class TextChunker:
         output = []
         output_indices = []
         candidate = [] if header is None else [header]
-        candidate_indices = []
 
+        candidate_indices = []
         for chunk_i, chunk in enumerate(chunks):
             chunk_with_header = [chunk] if header is None else [header, chunk]
 
             # Check if single chunk exceeds token limit
-            if (
-                len(self.tokenizer.tokenize(chunk_delimiter.join(chunk_with_header)))
-                > max_tokens
-            ):
+            if (len(self.tokenizer.tokenize(chunk_delimiter.join(chunk_with_header))) > max_tokens):
                 print(f"Warning: chunk overflow")
-                if add_ellipsis:
-                    # Try to add ellipsis if there's room
-                    if (
-                        len(
-                            self.tokenizer.tokenize(
-                                chunk_delimiter.join(candidate + ["..."])
-                            )
-                        )
-                        <= max_tokens
-                    ):
-                        candidate.append("...")
-                dropped_chunk_count += 1
-                continue
+                if add_ellipsis and len(self.tokenizer.tokenize(chunk_delimiter.join(candidate + ["..."]))) <= max_tokens:
+                    candidate.append("...")
+                    dropped_chunk_count += 1
+                continue  # this case would break downstream assumptions
 
-            # Check if adding chunk would exceed limit
-            extended_candidate = candidate + [chunk]
-            extended_candidate_tokens = len(
-                self.tokenizer.tokenize(chunk_delimiter.join(extended_candidate))
-            )
-
-            if extended_candidate_tokens > max_tokens:
-                # Save current candidate and start new one
+            # estimate token count with the current chunk added
+            extended_candidate_token_count = len(self.tokenizer.tokenize(chunk_delimiter.join(candidate + [chunk])))
+            # If the token count exceeds max_tokens, add the current candidate to output and start a new candidate
+            if extended_candidate_token_count > max_tokens:
                 output.append(chunk_delimiter.join(candidate))
                 output_indices.append(candidate_indices)
-                candidate = chunk_with_header
+                candidate = chunk_with_header  # re-initialize candidate
                 candidate_indices = [chunk_i]
+            # otherwise keep extending the candidate
             else:
-                # Add to current candidate
                 candidate.append(chunk)
                 candidate_indices.append(chunk_i)
-
-        # Add final candidate if not empty
-        if (header is not None and len(candidate) > 1) or (
-            header is None and len(candidate) > 0
-        ):
+        # add the remaining candidate to output if it's not empty
+        if (header is not None and len(candidate) > 1) or (header is None and len(candidate) > 0):
             output.append(chunk_delimiter.join(candidate))
             output_indices.append(candidate_indices)
-
         return output, output_indices, dropped_chunk_count
