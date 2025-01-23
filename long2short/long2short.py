@@ -60,11 +60,11 @@ class Long2Short:
         # Calculate number of chunks based on detail level
         document_length = len(self.tokenizer.tokenize(text))
         chunk_size = max(minimum_chunk_size, document_length // num_chunks)
-        text_chunks = self.chunker.chunk_text(text, chunk_size, chunk_delimiter)
+        text_chunks, _, _ = self.chunker.chunk_text(text, chunk_size, chunk_delimiter)
 
         if verbose:
             print(f"Splitting the text into {len(text_chunks)} chunks to be summarized.")
-            print(f"Chunk lengths are {[len(self.tokenizer.tokenize(x)) for x in text_chunks]}")                               
+            print(f"Chunk lengths are {[self.tokenizer.count_tokens(x) for x in text_chunks]}")                               
         
         # Build system message
         system_message = "Rewrite this text in summarized form."
@@ -75,8 +75,8 @@ class Long2Short:
         accumulated_summaries = []
         for chunk in tqdm(text_chunks):
             if summarize_recursively and accumulated_summaries:
-                accumulated_summaries = "\n\n".join(accumulated_summaries)
-                prompt = f"Previous summaries:\n\n{accumulated_summaries}\n\nText to summarize next:\n\n{chunk}"
+                accumulated_summaries_string = "\n\n".join(accumulated_summaries)
+                prompt = f"Previous summaries:\n\n{accumulated_summaries_string}\n\nText to summarize next:\n\n{chunk}"
             else:
                 prompt = chunk
 
